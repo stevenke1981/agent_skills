@@ -11,6 +11,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 SPEC = importlib.util.spec_from_file_location("skills_db", Path(__file__).resolve().parents[1] / "scripts/skills_db.py")
 DB = importlib.util.module_from_spec(SPEC)
@@ -103,6 +104,37 @@ class LibraryTests(unittest.TestCase):
         for path in ["../outside", "safe/../../outside", "/absolute", "C:/outside", r"\\server\share", "safe/../../../x"]:
             with self.subTest(path=path), self.assertRaises(ValueError):
                 DB.relative_path(self.root, path)
+
+    def test_smb_rename_retry_publishes_complete_directory(self) -> None:
+        pending = self.root / "package.incoming"
+        pending.mkdir()
+        (pending / "resource.txt").write_text("complete package", encoding="utf-8")
+        destination = self.root / "package"
+        original_rename = Path.rename
+        denied = False
+
+        def transient_rename(source: Path, target: Path) -> Path:
+            nonlocal denied
+            if not denied:
+                denied = True
+                raise PermissionError("temporary sharing denial")
+            return original_rename(source, target)
+
+        with mock.patch.object(Path, "rename", transient_rename), mock.patch.object(DB.time, "sleep"):
+            DB.rename_with_retry(pending, destination)
+        self.assertFalse(pending.exists())
+        self.assertEqual((destination / "resource.txt").read_text(encoding="utf-8"), "complete package")
+
+    def test_persistent_rename_denial_preserves_pending_and_current(self) -> None:
+        pending = self.root / "CURRENT.pending.json"
+        current = self.root / "CURRENT.json"
+        pending.write_text("new snapshot", encoding="utf-8")
+        current.write_text("verified snapshot", encoding="utf-8")
+        with mock.patch.object(Path, "replace", side_effect=PermissionError("persistent denial")), mock.patch.object(DB.time, "sleep"):
+            with self.assertRaises(PermissionError):
+                DB.rename_with_retry(pending, current, replace=True)
+        self.assertEqual(current.read_text(encoding="utf-8"), "verified snapshot")
+        self.assertEqual(pending.read_text(encoding="utf-8"), "new snapshot")
 
     def test_yaml_dates_are_preserved_as_catalog_strings(self) -> None:
         original = self.skill("one")

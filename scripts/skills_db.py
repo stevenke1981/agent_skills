@@ -16,6 +16,7 @@ import shutil
 import socket
 import sqlite3
 import sys
+import time
 import uuid
 from urllib.parse import quote
 import yaml
@@ -56,7 +57,7 @@ SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "target", "
              "work", ".work", "output", "outputs", "deliverables", "logs", "tmp", "temp", "model-envs", "jobs", "diagnostics", "test-results"}
 RESOURCE_DIRS = {"scripts", "references", "assets", "agents", "examples", "templates", "schemas", "prompts", "docs", "src", "tests", "skills", "resources", "tools", "lib", "data", "raw", "bin", "config", "fixtures", "evals", "validation", "packaging", "installer", ".github"}
 MANAGED_FILES = ["README.md", "Setup-Client.ps1", "Setup-Codex.cmd", "Search-Skills.ps1", "config/overrides.json", "docs/OPERATIONS.md", "docs/PRINCIPLES.md",
-                 "scripts/discover.py", "scripts/skills_db.py", "dashboard/index.template.html", "manager/nas-skill-library/SKILL.md", "tests/test_library.py", ".gitignore"]
+                 "scripts/discover.py", "scripts/skills_db.py", "dashboard/index.template.html", "manager/nas-skill-library/SKILL.md", "tests/test_library.py", "lessons.md", ".gitignore"]
 SECRET_FILE = re.compile(r"^(?:\.env(?:\..+)?|credentials(?:\..+)?|auth\.json|tokens?\.json|cookies?(?:\..+)?|id_rsa|id_ed25519)$", re.I)
 SECRET_PATTERNS = [
     ("private-key", re.compile(rb"-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----")),
@@ -75,6 +76,23 @@ def file_digest(path: Path) -> str:
         for part in iter(lambda: handle.read(1024 * 1024), b""):
             result.update(part)
     return result.hexdigest()
+
+
+def rename_with_retry(source: Path, destination: Path, *, replace: bool = False) -> None:
+    """Allow brief SMB sharing denials while retaining atomic publication."""
+    delays = (0, 0.2, 0.5, 1, 2)
+    for attempt, delay in enumerate(delays):
+        if delay:
+            time.sleep(delay)
+        try:
+            if replace:
+                source.replace(destination)
+            else:
+                source.rename(destination)
+            return
+        except PermissionError:
+            if attempt == len(delays) - 1:
+                raise
 
 
 def filesystem_path(path: Path) -> Path:
@@ -617,7 +635,7 @@ def publish(library: Path, destination: Path) -> dict:
                 return
             temporary = target.with_name(target.name + ".incoming-" + uuid.uuid4().hex)
             shutil.copytree(original, temporary)
-            temporary.rename(target)
+            rename_with_retry(temporary, target)
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
             for index, _ in enumerate(pool.map(publish_object, records)):
                 if index % 100 == 0:
@@ -629,7 +647,7 @@ def publish(library: Path, destination: Path) -> dict:
         else:
             temporary = target_release.with_name(target_release.name + ".incoming-" + uuid.uuid4().hex)
             shutil.copytree(release, temporary)
-            temporary.rename(target_release)
+            rename_with_retry(temporary, target_release)
         # Verify the immutable snapshot before changing the shared CURRENT pointer.
         temporary_current = destination / ("CURRENT.pending-" + uuid.uuid4().hex + ".json")
         write_json(temporary_current, current)
@@ -654,11 +672,11 @@ def publish(library: Path, destination: Path) -> dict:
             target.parent.mkdir(parents=True, exist_ok=True)
             temporary = target.with_name(target.name + ".incoming-" + uuid.uuid4().hex)
             shutil.copyfile(original, temporary)
-            temporary.replace(target)
+            rename_with_retry(temporary, target, replace=True)
             registry["managed_hashes"][relative] = file_digest(target)
         registry.update({"last_published": datetime.now(TZ).isoformat(), "latest_snapshot": current["snapshot"]})
         write_json(registry_path, registry)
-        temporary_current.replace(previous_current)
+        rename_with_retry(temporary_current, previous_current, replace=True)
         result = {"destination": str(destination), "snapshot": current["snapshot"], "packages": len(records), "readback": "sha256-pass"}
         write_json(library / "publish-result.json", result)
         print(json.dumps(result, ensure_ascii=False), flush=True)
