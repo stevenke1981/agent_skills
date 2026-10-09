@@ -62,3 +62,17 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& '\\DVA3221\public_
 `index.html` 與快照 SQLite 顯示發布時的盤點。之後匯入的收藏、待審與回收筒由管理頁即時合併；總入口的 `Search-Skills.ps1` 也會合併已批准的匯入版本。未批准的新來源不會自動交給客戶端使用。
 
 更新、復原與多電腦使用方式見 [docs/OPERATIONS.md](docs/OPERATIONS.md)，整理原則見 [docs/PRINCIPLES.md](docs/PRINCIPLES.md)。儀表板拖曳排序保存在各電腦瀏覽器，並能匯出 JSON；分類與版本由中央管理者更新。
+
+`manager-state/history/` 只保留最近 500 個修訂。寫入鎖 `manager-state/.write.lock` 超過 10 分鐘未更新會視為當機殘留並自動清除，不必手動刪除。
+
+## 開發與測試
+
+本儲存庫只含管理工具；技能內容、快照與 `runtime/` 都在 NAS，不進版控。換到別的區網時，可設環境變數 `NAS_SKILLS_LIBRARY` 指定共享資料夾，不必改程式；`Setup-Client.ps1` 從共享資料夾執行時會自動使用該資料夾。
+
+```powershell
+python -m pip install pyyaml==6.0.3 pytest ruff
+python -m ruff check scripts tests
+python -m pytest -q tests
+```
+
+測試需要 Windows 與 `powershell.exe`；CI 於 `windows-latest`、Python 3.13 執行同一組指令。
