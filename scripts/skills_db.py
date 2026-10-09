@@ -56,7 +56,7 @@ SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "target", "
              "models", "weights", "checkpoints", "artifacts", ".ag-artifacts", ".alignment-backup", ".codebase-memory", "gguf-test", "renders", "media",
              "work", ".work", "output", "outputs", "deliverables", "logs", "tmp", "temp", "model-envs", "jobs", "diagnostics", "test-results"}
 RESOURCE_DIRS = {"scripts", "references", "assets", "agents", "examples", "templates", "schemas", "prompts", "docs", "src", "tests", "skills", "resources", "tools", "lib", "data", "raw", "bin", "config", "fixtures", "evals", "validation", "packaging", "installer", ".github"}
-MANAGED_FILES = ["README.md", "Setup-Client.ps1", "Setup-Codex.cmd", "Search-Skills.ps1", "config/overrides.json", "docs/OPERATIONS.md", "docs/PRINCIPLES.md",
+MANAGED_FILES = ["README.md", "Setup-Client.ps1", "Setup-Codex.cmd", "Setup-Codex-OpenCode.cmd", "Search-Skills.ps1", "config/overrides.json", "docs/OPERATIONS.md", "docs/PRINCIPLES.md",
                  "scripts/discover.py", "scripts/skills_db.py", "dashboard/index.template.html", "manager/nas-skill-library/SKILL.md", "tests/test_library.py", "lessons.md", ".gitignore"]
 SECRET_FILE = re.compile(r"^(?:\.env(?:\..+)?|credentials(?:\..+)?|auth\.json|tokens?\.json|cookies?(?:\..+)?|id_rsa|id_ed25519)$", re.I)
 SECRET_PATTERNS = [

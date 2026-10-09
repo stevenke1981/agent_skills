@@ -6,6 +6,14 @@
 
 Windows / Codex：雙擊共享資料夾內的 **Setup-Codex.cmd**。只建立一個 `nas-skill-library` 查找入口，之後重啟 Codex；完整技能包留在 NAS。
 
+Windows / Codex + OpenCode：雙擊 **Setup-Codex-OpenCode.cmd**，一次建立兩個工具的入口，再重啟兩個工具。也可在 PowerShell 執行：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& '\\DVA3221\public_ssd\agent_skills\Setup-Client.ps1' -Client Codex,OpenCode"
+```
+
+這裡的 ExecutionPolicy 只套用在這次設定程序，不修改電腦的永久政策；不需要系統管理員權限。
+
 其他工具可在 PowerShell 執行：
 
 ```powershell
@@ -16,6 +24,8 @@ Windows / Codex：雙擊共享資料夾內的 **Setup-Codex.cmd**。只建立一
 支援 Codex、Claude、OpenCode、Gemini、AGY、Pi、Copilot、Bailian 與共用 Agents 的入口路徑。腳本不覆寫其他技能或模型/MCP 設定；已有同名且非本工具管理的資料夾會停止並指出衝突。它可使用 `-WhatIf` 預覽。
 
 每台電腦需要本來就能存取這個 NAS 共享資料夾。日後發布新的快照，只要重新查找，便會讀取新版。新對話會重新讀入口；進行中已載入的技能請重新讀取。外部軟體、GPU、模型、MCP 與帳號仍由各電腦提供；純文字流程可直接讀取使用。
+
+設定後，在任一工具輸入：「請使用 nas-skill-library，從 NAS 找適合處理字幕的技能。」就會按需查找中央庫；客戶端只看到一個查找入口，不會一次載入幾千個技能。OpenCode 入口位於其[官方支援的全域 Skill 目錄](https://opencode.ai/docs/skills/) `~/.config/opencode/skills/nas-skill-library/SKILL.md`。
 
 ## 搜尋與內容
 

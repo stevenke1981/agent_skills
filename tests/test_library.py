@@ -198,6 +198,22 @@ class LibraryTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
         self.assertIn(b"subtitle-test", result.stdout)
 
+    @unittest.skipUnless(os.name == "nt", "Multi-client setup fixture is Windows only")
+    def test_combined_setup_creates_only_codex_and_opencode_entries(self) -> None:
+        self.build([self.skill("one")])
+        user = self.root / "two-client-user"
+        environment = dict(os.environ, NAS_SKILLS_SETUP_SCRIPT=str(BASE / "Setup-Client.ps1"),
+                           NAS_SKILLS_TEST_LIBRARY=str(self.library), NAS_SKILLS_TEST_USER=str(user))
+        command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+                   "& $env:NAS_SKILLS_SETUP_SCRIPT -Client Codex,OpenCode -LibraryRoot $env:NAS_SKILLS_TEST_LIBRARY -UserRoot $env:NAS_SKILLS_TEST_USER"]
+        result = subprocess.run(command, capture_output=True, env=environment)
+        self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
+        codex = user / ".codex/skills/nas-skill-library/SKILL.md"
+        opencode = user / ".config/opencode/skills/nas-skill-library/SKILL.md"
+        self.assertEqual(codex.read_bytes(), opencode.read_bytes())
+        self.assertEqual(len([path for path in user.rglob("*") if path.is_file()]), 4)
+        self.assertFalse((user / ".config/opencode/opencode.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
