@@ -5,6 +5,7 @@
   --text: #132d32;
   --muted: #476568;
   --line: #c8d6d2;
+  --control-line: #6a837b;
   --accent: #00685d;
   --soft: #e3f1ed;
   --warn: #7c4e09;
@@ -33,7 +34,7 @@ select {
 }
 button {
   background: var(--card);
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: 9px;
   padding: 8px 14px;
   color: var(--text);
@@ -62,7 +63,7 @@ select {
   width: 100%;
   background: var(--card);
   color: var(--text);
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: 9px;
   padding: 10px 12px;
   min-height: 44px;
@@ -199,6 +200,12 @@ label {
   transition:
     background 0.12s,
     border-color 0.12s;
+}
+.client {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 94px);
+  overflow-y: auto;
 }
 .column-title {
   display: flex;
@@ -462,6 +469,7 @@ pre {
     --text: #e4efec;
     --muted: #b2c9c5;
     --line: #45605c;
+    --control-line: #79978f;
     --accent: #66d6bd;
     --soft: #24433c;
     --warn: #ffda8b;
@@ -538,6 +546,10 @@ pre {
   }
   .collection {
     grid-row: auto;
+  }
+  .client {
+    position: static;
+    max-height: none;
   }
   .toolbar label {
     flex: 1;

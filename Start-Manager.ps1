@@ -1,10 +1,11 @@
 [CmdletBinding()]
 param(
-    [string]$LibraryRoot = $PSScriptRoot,
+    [string]$LibraryRoot = '',
     [ValidateRange(1024, 65535)][int]$Port = 8766,
     [switch]$NoBrowser
 )
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($LibraryRoot)) { $LibraryRoot = Split-Path -Parent $MyInvocation.MyCommand.Path }
 $taskRepoId = '1a3e8840-2f5a-489e-8a4c-27f75bdb5cc0'
 $taskRoot = [IO.Path]::GetFullPath($LibraryRoot).TrimEnd('\')
 $taskCurrent = Get-Content -LiteralPath (Join-Path $taskRoot 'CURRENT.json') -Raw -Encoding UTF8 | ConvertFrom-Json
