@@ -2,7 +2,7 @@
 param(
     [ValidateSet('Codex','Claude','OpenCode','AGY','Gemini','Pi','Copilot','Bailian','Agents','All')]
     [string[]]$Client = @('Codex'),
-    [string]$LibraryRoot = '\\DVA3221\public_ssd\agent_skills',
+    [string]$LibraryRoot = '',
     [string]$UserRoot = [Environment]::GetFolderPath('UserProfile')
 )
 $ErrorActionPreference = 'Stop'
@@ -12,6 +12,13 @@ function Get-Sha256([string]$Path) {
     $taskStream = [IO.File]::OpenRead($Path)
     try { return ([BitConverter]::ToString($taskHash.ComputeHash($taskStream))).Replace('-', '').ToLowerInvariant() }
     finally { $taskStream.Dispose(); $taskHash.Dispose() }
+}
+if ([string]::IsNullOrWhiteSpace($LibraryRoot)) {
+    # Run from the NAS share: use that share. Otherwise fall back to the configured default.
+    $taskScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    if (Test-Path -LiteralPath (Join-Path $taskScriptRoot 'CURRENT.json')) { $LibraryRoot = $taskScriptRoot }
+    elseif ($env:NAS_SKILLS_LIBRARY) { $LibraryRoot = $env:NAS_SKILLS_LIBRARY }
+    else { $LibraryRoot = '\\DVA3221\public_ssd\agent_skills' }
 }
 $taskLibraryPath = [IO.Path]::GetFullPath($LibraryRoot).TrimEnd('\')
 if ($taskLibraryPath -match "['`r`n]" -or $taskLibraryPath.Contains('`')) { throw 'Library path contains unsupported characters.' }

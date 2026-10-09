@@ -7,7 +7,6 @@ import concurrent.futures
 import csv
 from datetime import datetime, timezone, timedelta
 import hashlib
-import html
 import json
 import os
 from pathlib import Path
@@ -15,14 +14,14 @@ import re
 import shutil
 import socket
 import sqlite3
-import sys
 import time
 import uuid
 from urllib.parse import quote
 import yaml
 
 REPO_ID = "1a3e8840-2f5a-489e-8a4c-27f75bdb5cc0"
-NAS = r"\\DVA3221\public_ssd\agent_skills"
+# NAS_SKILLS_LIBRARY lets another LAN reuse the tools without editing code.
+NAS = os.environ.get("NAS_SKILLS_LIBRARY") or r"\\DVA3221\public_ssd\agent_skills"
 BASE = Path(__file__).resolve().parents[1]
 TZ = timezone(timedelta(hours=8))
 CATEGORIES = {
