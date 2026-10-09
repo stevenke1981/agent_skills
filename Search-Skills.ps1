@@ -10,9 +10,10 @@ param(
     [switch]$IncludeQuarantined,
     [switch]$IncludePending,
     [switch]$IncludeRemoved,
-    [string]$LibraryRoot = $PSScriptRoot
+    [string]$LibraryRoot = ''
 )
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($LibraryRoot)) { $LibraryRoot = Split-Path -Parent $MyInvocation.MyCommand.Path }
 if ($LibraryRoot.StartsWith('\\?\UNC\')) { $LibraryRoot = '\\' + $LibraryRoot.Substring(8) }
 elseif ($LibraryRoot.StartsWith('\\?\')) { $LibraryRoot = $LibraryRoot.Substring(4) }
 $taskRepoId = '1a3e8840-2f5a-489e-8a4c-27f75bdb5cc0'
