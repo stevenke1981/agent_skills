@@ -2,17 +2,21 @@
 import io
 import json
 import hashlib
+import os
 from pathlib import Path
 import sys
 import subprocess
 import tempfile
 import threading
+import time
 import unittest
+from unittest import mock
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+import manager_core
 from manager_core import LibraryManager, parse_github_url
 from manager_server import ManagerServer
 
@@ -217,6 +221,27 @@ class ManagerTests(unittest.TestCase):
         state = self.manager.state()
         self.assertEqual(len(state["bookmarks"]), 6)
         self.assertEqual(state["revision"], 6)
+
+    def test_stale_writer_lock_is_recovered_but_live_lock_blocks(self):
+        lock = self.manager.state_root / ".write.lock"
+        lock.write_text("{}")
+        with mock.patch("manager_core.time.sleep"), self.assertRaises(RuntimeError):
+            self.manager.bookmark("https://github.com/example/live")
+        self.assertTrue(lock.exists())
+        old = time.time() - manager_core.LOCK_STALE_SECONDS - 5
+        os.utime(lock, (old, old))
+        self.manager.bookmark("https://github.com/example/stale")
+        self.assertFalse(lock.exists())
+        self.assertEqual(len(self.manager.state()["bookmarks"]), 1)
+
+    def test_state_history_is_bounded(self):
+        with mock.patch("manager_core.HISTORY_KEEP", 3):
+            for index in range(5):
+                self.manager.bookmark("https://github.com/example/history" + str(index))
+        history = sorted((self.manager.state_root / "history").glob("*.json"))
+        self.assertEqual(len(history), 3)
+        self.assertTrue(history[-1].name.startswith("00000005-"))
+        self.assertEqual(self.manager.state()["revision"], 5)
 
 
 if __name__ == "__main__":

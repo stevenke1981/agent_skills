@@ -25,6 +25,8 @@ MAX_DOWNLOAD = 64 * 1024 * 1024
 MAX_EXPANDED = 256 * 1024 * 1024
 MAX_FILES = 6000
 CLIENTS = {"Codex": ".codex/skills", "OpenCode": ".config/opencode/skills"}
+LOCK_STALE_SECONDS = 600
+HISTORY_KEEP = 500
 RESERVED = re.compile(r"^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)", re.I)
 
 
@@ -110,6 +112,14 @@ class LibraryManager:
                 descriptor = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
                 break
             except FileExistsError:
+                # A crashed writer must not block every computer forever. Writers
+                # finish well inside this window, even for 64 MiB SMB imports.
+                try:
+                    if time.time() - lock.stat().st_mtime > LOCK_STALE_SECONDS:
+                        lock.unlink(missing_ok=True)
+                        continue
+                except FileNotFoundError:
+                    continue
                 if attempt == 29:
                     raise RuntimeError("另一台電腦正在更新收藏；請稍後再試")
                 time.sleep(0.1)
@@ -125,8 +135,16 @@ class LibraryManager:
             pending = self.state_root / ("library.pending-" + uuid.uuid4().hex + ".json")
             db.write_json(pending, value)
             db.rename_with_retry(pending, self.state_root / "library.json", replace=True)
+            self._prune_history(history.parent)
         finally:
             lock.unlink(missing_ok=True)
+
+    @staticmethod
+    def _prune_history(folder: Path) -> None:
+        # Every revision is a full state copy; keep a bounded recent window.
+        entries = sorted(folder.glob("*.json"))
+        for old in entries[:-HISTORY_KEEP]:
+            old.unlink(missing_ok=True)
 
     def records(self) -> list[dict]:
         current = db.read_json(self.library / "CURRENT.json")
@@ -150,9 +168,9 @@ class LibraryManager:
         return list(result.values())
 
     def record(self, identity: str) -> dict:
-        for record in self.records():
-            if record["id"] == identity:
-                return record
+        record = next((item for item in self.records() if item["id"] == identity), None)
+        if record:
+            return record
         for values in self.bindings().values():
             for binding in values:
                 if binding["id"] == identity and binding.get("record"):
@@ -392,6 +410,10 @@ class LibraryManager:
             return {"id": identity, "client": client, "status": "disabled", "restorable_backup": str(backup)}
 
     def archive(self, identity: str, archived: bool):
+        with self._mutex:
+            return self._archive(identity, archived)
+
+    def _archive(self, identity: str, archived: bool):
         self.record(identity)
         if archived and any(item["id"] == identity for values in self.bindings().values() for item in values):
             raise ValueError("請先從此機 Codex / OpenCode 啟用區移除這個入口")
