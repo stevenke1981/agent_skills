@@ -57,7 +57,10 @@ SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "target", "
              "work", ".work", "output", "outputs", "deliverables", "logs", "tmp", "temp", "model-envs", "jobs", "diagnostics", "test-results"}
 RESOURCE_DIRS = {"scripts", "references", "assets", "agents", "examples", "templates", "schemas", "prompts", "docs", "src", "tests", "skills", "resources", "tools", "lib", "data", "raw", "bin", "config", "fixtures", "evals", "validation", "packaging", "installer", ".github"}
 MANAGED_FILES = ["README.md", "Setup-Client.ps1", "Setup-Codex.cmd", "Setup-Codex-OpenCode.cmd", "Search-Skills.ps1", "config/overrides.json", "docs/OPERATIONS.md", "docs/PRINCIPLES.md",
-                 "scripts/discover.py", "scripts/skills_db.py", "dashboard/index.template.html", "manager/nas-skill-library/SKILL.md", "tests/test_library.py", "lessons.md", ".gitignore"]
+                 "scripts/discover.py", "scripts/skills_db.py", "dashboard/index.template.html", "manager/nas-skill-library/SKILL.md", "tests/test_library.py", "lessons.md", ".gitignore",
+                 "Start-Manager.ps1", "Start-Manager.cmd", "scripts/manager_core.py", "scripts/manager_server.py", "scripts/prepare_runtime.py",
+                 "manager-web/index.html", "manager-web/app.js", "manager-web/style.css", "config/runtime.json", "config/gaps.json",
+                 "docs/IMPORT-AND-ACTIVATE.md", "docs/GAPS.md", "tests/test_manager.py"]
 SECRET_FILE = re.compile(r"^(?:\.env(?:\..+)?|credentials(?:\..+)?|auth\.json|tokens?\.json|cookies?(?:\..+)?|id_rsa|id_ed25519)$", re.I)
 SECRET_PATTERNS = [
     ("private-key", re.compile(rb"-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----")),
@@ -659,7 +662,7 @@ def publish(library: Path, destination: Path) -> dict:
         managed = MANAGED_FILES
         registry = read_json(registry_path) if registry_path.exists() else {"repo_id": REPO_ID, "managed_hashes": {}}
         for relative in managed + ["index.html"]:
-            original = release / "root-index.html" if relative == "index.html" else relative_path(BASE, relative)
+            original = release / "root-index.html" if relative == "index.html" else relative_path(release / "management-source", relative)
             target = relative_path(destination, relative)
             if target.exists():
                 known = registry["managed_hashes"].get(relative)
@@ -667,7 +670,7 @@ def publish(library: Path, destination: Path) -> dict:
                 if actual != known and actual != file_digest(original):
                     raise RuntimeError("NAS managed file was independently modified: " + relative)
         for relative in managed + ["index.html"]:
-            original = release / "root-index.html" if relative == "index.html" else relative_path(BASE, relative)
+            original = release / "root-index.html" if relative == "index.html" else relative_path(release / "management-source", relative)
             target = relative_path(destination, relative)
             target.parent.mkdir(parents=True, exist_ok=True)
             temporary = target.with_name(target.name + ".incoming-" + uuid.uuid4().hex)

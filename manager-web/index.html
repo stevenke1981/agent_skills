@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Skills Library · 收藏與啟用</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">S <span>Skills Library</span></a>
+      <div id="machine">正在連線至本機管理服務…</div>
+      <button id="refresh">重新整理</button>
+    </header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">NAS COLLECTION / THIS COMPUTER</p>
+        <h1>收藏一次，每台電腦按需使用。</h1>
+        <p>
+          拖到 Codex 或 OpenCode 啟用，拖回收藏區停止使用。完整技能留在 NAS。
+        </p>
+        <p class="location" id="library-location"></p>
+      </section>
+      <section class="import-panel" aria-label="匯入與收藏">
+        <form id="github-form">
+          <label for="github-url">貼上 GitHub 儲存庫或 SKILL.md 連結</label>
+          <div class="input-line">
+            <input
+              id="github-url"
+              type="url"
+              placeholder="https://github.com/owner/repository"
+              required
+            /><button type="button" id="bookmark">先收藏連結</button
+            ><button type="submit" class="primary">下載到待審區</button>
+          </div>
+        </form>
+        <div id="zip-drop" class="zip-drop" tabindex="0">
+          <strong>ZIP 匯入</strong><span>拖曳技能包 ZIP 到這裡，或選擇檔案</span
+          ><input
+            id="zip-file"
+            type="file"
+            accept=".zip,application/zip"
+            aria-label="選擇技能 ZIP"
+          />
+        </div>
+      </section>
+      <div id="notice" role="status" aria-live="polite" hidden></div>
+      <section class="toolbar" aria-label="搜尋與篩選">
+        <label class="search-label" for="query"
+          >搜尋收藏<input
+            id="query"
+            type="search"
+            placeholder="名稱、用途、工具，例如：字幕、Bevy、Godot" /></label
+        ><label for="mode"
+          >收錄狀態<select id="mode">
+            <option value="collection">NAS 收藏</option>
+            <option value="pending">新下載・待審</option>
+            <option value="imports">GitHub / ZIP 匯入</option>
+            <option value="archived">回收筒</option>
+            <option value="all">所有項目</option>
+          </select></label
+        ><label for="category"
+          >分類<select id="category">
+            <option value="">全部分類</option>
+          </select></label
+        >
+      </section>
+      <section class="board" aria-label="拖曳啟用管理">
+        <section
+          class="column collection"
+          data-target="collection"
+          aria-label="NAS 收藏區"
+        >
+          <div class="column-title">
+            <h2>NAS 收藏</h2>
+            <span id="count">—</span>
+          </div>
+          <p class="column-hint">
+            收藏與原始資源共享。拖回此區，只停用原本工具的入口。
+          </p>
+          <div id="collection-list" class="cards"></div>
+          <button id="more" hidden>顯示更多</button>
+        </section>
+        <section
+          class="column client"
+          data-target="Codex"
+          aria-label="此機 Codex 啟用區"
+        >
+          <div class="column-title">
+            <h2>此機 Codex</h2>
+            <span id="codex-count">0</span>
+          </div>
+          <p class="column-hint">拖入技能，建立這台電腦的查找入口。</p>
+          <div id="Codex-list" class="cards"></div>
+          <div class="drop-hint">拖曳到這裡啟用</div>
+        </section>
+        <section
+          class="column client"
+          data-target="OpenCode"
+          aria-label="此機 OpenCode 啟用區"
+        >
+          <div class="column-title">
+            <h2>此機 OpenCode</h2>
+            <span id="opencode-count">0</span>
+          </div>
+          <p class="column-hint">同一個技能可同時用於兩個工具。</p>
+          <div id="OpenCode-list" class="cards"></div>
+          <div class="drop-hint">拖曳到這裡啟用</div>
+        </section>
+      </section>
+      <section class="recycle" data-target="archive" aria-label="移除收藏區">
+        <div>
+          <strong>拖到此處，移除 NAS 收藏</strong>
+          <p>
+            需確認後才移到回收筒，保留原始封裝與歷史。回收筒中的技能可還原。
+          </p>
+        </div>
+        <button id="show-archive">查看回收筒</button>
+      </section>
+      <details class="saved-links">
+        <summary>
+          已收藏的 GitHub 連結 <span id="bookmark-count">0</span>
+        </summary>
+        <div id="bookmarks"></div>
+      </details>
+      <details class="gaps" open>
+        <summary>缺少哪些專門技能？</summary>
+        <p>
+          現有收藏已包含 Unity、Godot、Unreal、Roblox 與
+          Phaser。下列比對以專門流程為準，候選下載後仍由你決定是否安裝。
+        </p>
+        <div id="gaps"></div>
+      </details>
+      <footer>
+        每台電腦從 NAS
+        啟動同一份管理程式。這裡操控的是上方標示的電腦；移除只處理本工具建立且未經修改的入口。啟用後請重啟客戶端，並確認工具、模型及
+        MCP 相依環境。
+      </footer>
+    </main>
+    <dialog id="detail">
+      <div class="dialog-title">
+        <h2 id="detail-title"></h2>
+        <button id="close-detail" aria-label="關閉詳細資料">關閉</button>
+      </div>
+      <div id="detail-meta"></div>
+      <p id="entry-path" class="location"></p>
+      <button id="copy-path">複製原件路徑</button>
+      <h3>SKILL.md 原文</h3>
+      <pre id="source-text"></pre>
+      <div id="detail-actions" class="actions"></div>
+    </dialog>
+    <dialog id="confirm">
+      <h2 id="confirm-title"></h2>
+      <p id="confirm-text"></p>
+      <div class="actions">
+        <button id="cancel-action">取消</button
+        ><button id="confirm-action" class="primary">確認</button>
+      </div>
+    </dialog>
+  </body>
+</html>

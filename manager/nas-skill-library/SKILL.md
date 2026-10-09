@@ -7,6 +7,8 @@ description: 搜尋 NAS 集中技能庫，依任務用途、來源客戶端、�
 
 資料庫根目錄是 `\\DVA3221\public_ssd\agent_skills`。`CURRENT.json` 指向目前快照；`releases/<snapshot>/catalog.jsonl` 與 `catalog.json` 是搜尋索引，`objects/<prefix>/<sha256>/skill/` 保存完整原始技能包。瀏覽器儀表板是根目錄 `index.html`。
 
+要收藏 GitHub、匯入 ZIP 或在此機拖曳啟用／停用 Codex、OpenCode，從 NAS 執行 `Start-Manager.cmd`，讀取 `docs/IMPORT-AND-ACTIVATE.md`。新來源先待審，未取得使用者安裝同意前不要建立客戶端入口。搜尋腳本會合併共享狀態中已批准且未移到回收筒的匯入版本。
+
 ## 找到適合任務的技能
 
 以工作產物、工具及限制縮小搜尋。Windows 可直接執行 `Search-Skills.ps1`，不需 Python、Node 或額外安裝：
@@ -34,6 +36,6 @@ description: 搜尋 NAS 集中技能庫，依任務用途、來源客戶端、�
 
 每個 Skill 專注一類任務。管理描述依「情境、意圖、產物、邊界」補足，保留原件與客戶端特有 frontmatter；例外要寫清資料不足、來源衝突或工具不可用時如何交付。
 
-修改分類與描述時編輯集中管理專案的 `config/overrides.json`；再按根目錄 `docs/OPERATIONS.md` 建立新快照、驗證及發布。不要直接覆寫 `objects/` 或舊快照。寫入由單一管理者進行，其他電腦按需讀取。
+修改分類與描述時編輯集中管理專案的 `config/overrides.json`；再按根目錄 `docs/OPERATIONS.md` 建立新快照、驗證及發布。不要直接覆寫 `objects/` 或舊快照。快照發布由單一管理者進行；管理頁的跨電腦收藏寫入另有排他鎖與歷史保存。
 
 發布後各電腦無須重新安裝技能庫入口；進行中的對話需要重新讀取 `CURRENT.json` 和已選技能，才能取得更新。已封裝、索引完整與實際任務驗收是不同狀態。

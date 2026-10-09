@@ -214,6 +214,19 @@ class LibraryTests(unittest.TestCase):
         self.assertEqual(len([path for path in user.rglob("*") if path.is_file()]), 4)
         self.assertFalse((user / ".config/opencode/opencode.json").exists())
 
+    def test_publish_uses_frozen_management_source(self) -> None:
+        self.build([self.skill("one")])
+        current = DB.read_json(self.library / "CURRENT.json")
+        expected = (self.library / current["release"] / "management-source/README.md").read_bytes()
+        changing_workspace = self.root / "changing-workspace"
+        changing_workspace.mkdir()
+        (changing_workspace / "README.md").write_text("unpublished change", encoding="utf-8")
+        destination = self.root / "nas"
+        with mock.patch.object(DB, "BASE", changing_workspace), mock.patch.object(DB, "MANAGED_FILES", ["README.md"]):
+            with contextlib.redirect_stdout(io.StringIO()):
+                DB.publish(self.library, destination)
+        self.assertEqual((destination / "README.md").read_bytes(), expected)
+
 
 if __name__ == "__main__":
     unittest.main()

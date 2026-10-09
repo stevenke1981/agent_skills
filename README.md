@@ -2,6 +2,12 @@
 
 中央資料夾：`\\DVA3221\public_ssd\agent_skills`。從檔案總管開啟 `index.html`，即可搜尋用途、觸發條件及相依工具，篩選分類、來源與歷史版本。介面不需網路服務、外部字型或 CDN。
 
+## 匯入與拖曳安裝介面
+
+雙擊 NAS 中的 **Start-Manager.cmd**，即可開啟收藏與啟用管理頁。貼 GitHub 連結或拖入 ZIP，先保存待審；檢視來源後拖到 **此機 Codex／OpenCode**，確認新技能安裝。拖回收藏區即可停用，拖到回收筒則移除共享收藏並保留還原能力。
+
+同一個啟動檔可在其他 **Windows x64** 電腦直接執行，Python 與管理程式共用 NAS，不需逐台安裝。上方顯示正在操作的電腦；只有小型查找入口寫入該機。詳細流程與權限見 [docs/IMPORT-AND-ACTIVATE.md](docs/IMPORT-AND-ACTIVATE.md)，遊戲技能缺口與下載候選見 [docs/GAPS.md](docs/GAPS.md)。
+
 ## 其他電腦只需設定一次
 
 Windows / Codex：雙擊共享資料夾內的 **Setup-Codex.cmd**。只建立一個 `nas-skill-library` 查找入口，之後重啟 Codex；完整技能包留在 NAS。
@@ -42,6 +48,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& '\\DVA3221\public_
 - `objects/<prefix>/<sha256>/skill/`：原始 `SKILL.md` 與支援資源，不執行來源腳本。
 - `releases/<snapshot>/audit/`：掃描範圍、失效舊路徑、封裝排除、同名版本及待改善清單。
 - `versions/`：管理專案的 Git bundle，與資料快照分開保存。
+- `manager-state/`：匯入、收藏、安裝批准與共享回收筒的 JSON 狀態及歷史；不直接更改快照 SQLite。
+- `runtime/`：其他 Windows 電腦共用的可攜 Python 與授權資料。
 
 保留使用者提出的五大分類，另加影音與創作、開發與工程、平台與技能管理三類，避免把不同任務硬塞進同一分類。分類及欄位擷取是初始管理資料，人工修訂由 `config/overrides.json` 保留。
 
@@ -50,5 +58,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& '\\DVA3221\public_
 ## 版本與維護
 
 一般使用者以 NAS 唯讀權限搜尋即可；維護者建立新快照、逐檔 SHA-256 驗證後再切換 `CURRENT.json`。舊物件與快照保留，可回復。避免讓多台電腦同時直接寫 SQLite；它是每個快照的唯讀索引。
+
+`index.html` 與快照 SQLite 顯示發布時的盤點。之後匯入的收藏、待審與回收筒由管理頁即時合併；總入口的 `Search-Skills.ps1` 也會合併已批准的匯入版本。未批准的新來源不會自動交給客戶端使用。
 
 更新、復原與多電腦使用方式見 [docs/OPERATIONS.md](docs/OPERATIONS.md)，整理原則見 [docs/PRINCIPLES.md](docs/PRINCIPLES.md)。儀表板拖曳排序保存在各電腦瀏覽器，並能匯出 JSON；分類與版本由中央管理者更新。

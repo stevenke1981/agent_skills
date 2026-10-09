@@ -8,9 +8,13 @@ param(
     [ValidateRange(1, 1000)][int]$Top = 10,
     [switch]$IncludeArchives,
     [switch]$IncludeQuarantined,
+    [switch]$IncludePending,
+    [switch]$IncludeRemoved,
     [string]$LibraryRoot = $PSScriptRoot
 )
 $ErrorActionPreference = 'Stop'
+if ($LibraryRoot.StartsWith('\\?\UNC\')) { $LibraryRoot = '\\' + $LibraryRoot.Substring(8) }
+elseif ($LibraryRoot.StartsWith('\\?\')) { $LibraryRoot = $LibraryRoot.Substring(4) }
 $taskRepoId = '1a3e8840-2f5a-489e-8a4c-27f75bdb5cc0'
 function Get-Sha256([string]$Path) {
     $taskHash = [Security.Cryptography.SHA256]::Create()
@@ -35,10 +39,23 @@ $taskReleaseManifest = Get-Content -LiteralPath $taskManifest -Raw -Encoding UTF
 $taskCatalogRecord = @($taskReleaseManifest.files | Where-Object { $_.path -eq 'catalog.json' })
 if ($taskCatalogRecord.Count -ne 1 -or (Get-Sha256 $taskCatalogPath) -ne $taskCatalogRecord[0].sha256) { throw 'Catalog hash mismatch.' }
 $taskCatalog = @(Get-Content -LiteralPath $taskCatalogPath -Raw -Encoding UTF8 | ConvertFrom-Json)
+$taskRemoved = @()
+$taskStatePath = Join-Path $LibraryRoot 'manager-state\library.json'
+if (Test-Path -LiteralPath $taskStatePath) {
+    $taskSharedState = Get-Content -LiteralPath $taskStatePath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($taskSharedState.repo_id -ne $taskRepoId -or $taskSharedState.schema -ne 1) { throw 'Unrecognized shared collection state.' }
+    $taskById = @{}
+    foreach ($taskSkill in $taskCatalog) { if ($null -ne $taskSkill -and $taskSkill.id) { $taskById[$taskSkill.id] = $taskSkill } }
+    foreach ($taskSkill in @($taskSharedState.imports)) { if ($null -ne $taskSkill -and $taskSkill.id) { $taskById[$taskSkill.id] = $taskSkill } }
+    $taskCatalog = @($taskById.Values)
+    $taskRemoved = @($taskSharedState.archived)
+}
 $taskWords = @($Query.Trim() -split '\s+' | Where-Object { $_ })
 $taskMatches = foreach ($taskSkill in $taskCatalog) {
     if (-not $IncludeArchives -and $taskSkill.archive_only) { continue }
     if (-not $IncludeQuarantined -and $taskSkill.status -eq 'quarantined') { continue }
+    if (-not $IncludePending -and $taskSkill.approval -eq 'pending') { continue }
+    if (-not $IncludeRemoved -and $taskRemoved -contains $taskSkill.id) { continue }
     if ($Name -and $taskSkill.name -ne $Name) { continue }
     if ($Id -and $taskSkill.id -ne $Id) { continue }
     if ($Category -and $taskSkill.category -ne $Category -and $taskSkill.category_label -ne $Category) { continue }
@@ -52,7 +69,8 @@ $taskMatches = foreach ($taskSkill in $taskCatalog) {
         Category = $taskSkill.category_label; Status = $taskSkill.status
         Triggers = @($taskSkill.triggers); Dependencies = @($taskSkill.dependencies)
         EntryPoint = Resolve-LibraryPath $taskSkill.object_path
-        Card = Resolve-LibraryPath $taskSkill.card_path
+        Card = $(if ($taskSkill.card_path) { Resolve-LibraryPath $taskSkill.card_path } else { $null })
+        Approval = $(if ($taskSkill.approval) { $taskSkill.approval } else { 'approved' })
         Variants = @($taskSkill.same_name_variants).Count; Sources = @($taskSkill.sources)
         Issues = @($taskSkill.issues); Snapshot = $taskCurrent.snapshot
     }

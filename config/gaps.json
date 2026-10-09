@@ -1,0 +1,62 @@
+{
+  "reviewed_at": "2026-10-09",
+  "baseline_snapshot": "20261009T103348+0800-i711700",
+  "method": "比對可用技能的名稱與 description，並檢視搜尋命中的用途；這是遊戲開發專門流程的盤點，不是所有產業能力的完整缺口。",
+  "existing": [
+    "Unity",
+    "Godot",
+    "Unreal",
+    "Roblox",
+    "Phaser",
+    "遊戲設計",
+    "遊戲素材與音效",
+    "瀏覽器遊戲測試"
+  ],
+  "items": [
+    {
+      "topic": "Bevy / Rust ECS 遊戲開發",
+      "finding": "原盤點沒有 Bevy 專門入口。候選涵蓋 ECS、資產、音訊、UI、測試與 WebGPU；版本以來源的 Bevy 0.19 為準。",
+      "status": "已下載 31 個技能到待審區；建議只啟用 bevy 總入口，其他按需讀取。社群維護、MIT；工作流程尚未實作驗收。",
+      "url": "https://github.com/chrisgliddon/bevy-skills",
+      "commit": "b1b4da5744ebbd5c526342b2351967411cd5ca61",
+      "entry_name": "bevy"
+    },
+    {
+      "topic": "PixiJS v8 / 2D 渲染",
+      "finding": "現有 threejs-data-visualization 提及 PixiJS，但沒有專門處理 PixiJS v8 的場景、Sprite、資產、事件與效能流程。",
+      "status": "已下載 26 個技能到待審區；建議啟用 pixijs 總入口。PixiJS 官方維護、MIT；工作流程尚未實作驗收。",
+      "url": "https://github.com/pixijs/pixijs-skills",
+      "commit": "83760c6f53462ca9cecd68055041f5a8c94758ce",
+      "entry_name": "pixijs"
+    },
+    {
+      "topic": "Ren’Py / Android 打包",
+      "finding": "沒有 Ren’Py Android SDK、RAPT 與 APK/AAB 打包專門流程。此候選負責打包，不涵蓋視覺小說的全部開發。",
+      "status": "已下載 1 個技能到待審區。社群維護、MIT；需 Ren’Py 8.x、Python 3.10+、JDK 21+ 與 Android SDK，工作流程尚未實作驗收。",
+      "url": "https://github.com/yusunz/renpy-android-packager-skill",
+      "commit": "d9ea5a15c5ef7c563258e36dc70197d6ae36b81b",
+      "entry_name": "renpy-android-packager"
+    },
+    {
+      "topic": "GDevelop / 場景與事件 JSON",
+      "finding": "沒有 GDevelop 場景、事件、物件與 instance 欄位的專門參考；此候選提供分類參考與 PowerShell 驗證腳本。",
+      "status": "已下載 1 個技能到待審區。社群維護；來源 API 未提供授權資訊，請先檢視來源；工作流程尚未實作驗收。",
+      "url": "https://github.com/adamboothuk/gdevelop-reference",
+      "commit": "463a7594b609364ad4d9f346ed8b08596434041f",
+      "entry_name": "gdevelop-reference"
+    },
+    {
+      "topic": "Steam Web API / 遊戲資料整合",
+      "finding": "沒有 Steam Web API 認證、玩家數、評論、銷售與成就資料專門流程。此候選不涵蓋完整 Steamworks 原生 SDK 與商店發布。",
+      "status": "已下載 1 個技能到待審區。社群維護、CC0-1.0；需網路與對應 API 權限，工作流程尚未實作驗收。",
+      "url": "https://github.com/burkanbogaz/steamworks-api",
+      "commit": "b7258804221b625eced2ee1c2057232756019025",
+      "entry_name": "steamworks-api-specialist"
+    },
+    {
+      "topic": "其他遊戲專門流程",
+      "finding": "未找到可用的 Defold、GameMaker、Steamworks 原生 SDK 或 rollback netcode 專門入口。現有 rollback 命中的是部署回復，不能視為連線遊戲 rollback netcode。",
+      "status": "列為後續需求；尚未推薦或下載來源未核實的技能。"
+    }
+  ]
+}
